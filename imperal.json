@@ -1,0 +1,633 @@
+{
+  "manifest_schema_version": 3,
+  "sdk_version": "5.13.0",
+  "app_id": "ramp-connector",
+  "version": "0.1.0",
+  "name": "Ramp",
+  "description": "Connect your own Ramp account (OAuth2 Client Credentials -- bring your own developer app Client ID/Secret from the Ramp Developer Console) to read cards, transactions, users, departments, locations, reimbursements, limits, and receipts, plus value-add spend and card-utilization reports. Reimbursement creation, user department/role updates, and card suspend/unsuspend are supported. Bill Pay (AP invoices) is out of scope this release.",
+  "icon": "icon.svg",
+  "actions_explicit": true,
+  "system": false,
+  "capabilities": [
+    "ramp:read",
+    "ramp:write"
+  ],
+  "tools": [
+    {
+      "name": "connect_ramp",
+      "description": "Connect your own Ramp account by saving your developer app's Client ID/Secret (from the Ramp Developer Console), after checking they actually work via OAuth2 Client Credentials.",
+      "action_type": "write",
+      "chain_callable": true,
+      "effects": [
+        "create:connection"
+      ],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "client_id": {
+            "default": "",
+            "description": "Your Ramp developer app's Client ID.",
+            "title": "Client Id",
+            "type": "string"
+          },
+          "client_secret": {
+            "default": "",
+            "description": "Your Ramp developer app's Client Secret.",
+            "title": "Client Secret",
+            "type": "string"
+          },
+          "label": {
+            "default": "",
+            "description": "Optional friendly label for this connection, e.g. 'Acme Inc Ramp'.",
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "title": "ConnectRampParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "id": {
+            "default": "",
+            "title": "Id",
+            "type": "string"
+          },
+          "label": {
+            "default": "",
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "title": "ProviderConnection",
+        "type": "object"
+      },
+      "event": "ramp-connector.connect_ramp",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "tool_ramp-connector_chat"
+    },
+    {
+      "name": "list_connections",
+      "description": "List the connected Ramp accounts.",
+      "action_type": "read",
+      "chain_callable": true,
+      "effects": [],
+      "id_projection": "",
+      "params_schema": {
+        "description": "Explicit empty params model -- V17 disallows untyped handlers.",
+        "properties": {},
+        "title": "NoParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "$defs": {
+          "ProviderConnection": {
+            "properties": {
+              "id": {
+                "default": "",
+                "title": "Id",
+                "type": "string"
+              },
+              "label": {
+                "default": "",
+                "title": "Label",
+                "type": "string"
+              }
+            },
+            "title": "ProviderConnection",
+            "type": "object"
+          }
+        },
+        "properties": {
+          "connections": {
+            "items": {
+              "$ref": "#/$defs/ProviderConnection"
+            },
+            "title": "Connections",
+            "type": "array"
+          }
+        },
+        "title": "ProviderConnectionList",
+        "type": "object"
+      },
+      "event": "",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "tool_ramp-connector_chat"
+    },
+    {
+      "name": "disconnect_ramp",
+      "description": "Disconnect a Ramp account: deletes the saved Client ID/Secret pair. Nothing in Ramp itself is changed.",
+      "action_type": "write",
+      "chain_callable": true,
+      "effects": [
+        "delete:connection"
+      ],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "connection_id": {
+            "description": "Which connection to disconnect (see list_connections).",
+            "title": "Connection Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "connection_id"
+        ],
+        "title": "DisconnectRampParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "deleted": {
+            "default": false,
+            "title": "Deleted",
+            "type": "boolean"
+          },
+          "id": {
+            "default": "",
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "title": "DeleteResult",
+        "type": "object"
+      },
+      "event": "ramp-connector.disconnect_ramp",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "tool_ramp-connector_chat"
+    },
+    {
+      "name": "list_entities",
+      "description": "List Ramp records of any resource type (cards, transactions, users, departments, locations, reimbursements, limits, receipts) in the connected Ramp account.",
+      "action_type": "read",
+      "chain_callable": true,
+      "effects": [],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "connection_id": {
+            "default": "",
+            "description": "Which connected Ramp account to use (see list_connections). Omit if only one is connected.",
+            "title": "Connection Id",
+            "type": "string"
+          },
+          "entity": {
+            "description": "Resource type: cards, transactions, users, departments, locations, reimbursements, limits, receipts.",
+            "title": "Entity",
+            "type": "string"
+          },
+          "filter_expr": {
+            "default": "",
+            "description": "Optional query-string filter supported by the resource (e.g. 'department_id=...').",
+            "title": "Filter Expr",
+            "type": "string"
+          },
+          "limit": {
+            "default": 50,
+            "description": "Maximum records to return.",
+            "maximum": 200,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "entity"
+        ],
+        "title": "ListEntitiesParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "entity": {
+            "default": "",
+            "title": "Entity",
+            "type": "string"
+          },
+          "count": {
+            "default": 0,
+            "title": "Count",
+            "type": "integer"
+          },
+          "records": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Records",
+            "type": "array"
+          }
+        },
+        "title": "EntityList",
+        "type": "object"
+      },
+      "event": "",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "tool_ramp-connector_chat"
+    },
+    {
+      "name": "get_entity",
+      "description": "Read one Ramp record of any resource type in full by its id.",
+      "action_type": "read",
+      "chain_callable": true,
+      "effects": [],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "connection_id": {
+            "default": "",
+            "description": "Which connected Ramp account to use (see list_connections). Omit if only one is connected.",
+            "title": "Connection Id",
+            "type": "string"
+          },
+          "entity": {
+            "description": "Resource type, same values as list_entities.",
+            "title": "Entity",
+            "type": "string"
+          },
+          "record_id": {
+            "description": "The record's Ramp id.",
+            "title": "Record Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "entity",
+          "record_id"
+        ],
+        "title": "GetEntityParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "entity": {
+            "default": "",
+            "title": "Entity",
+            "type": "string"
+          },
+          "record": {
+            "additionalProperties": true,
+            "title": "Record",
+            "type": "object"
+          }
+        },
+        "title": "EntityDetail",
+        "type": "object"
+      },
+      "event": "",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "tool_ramp-connector_chat"
+    },
+    {
+      "name": "create_reimbursement",
+      "description": "Create a new reimbursement request for a Ramp user -- an out-of-pocket expense to be repaid.",
+      "action_type": "write",
+      "chain_callable": true,
+      "effects": [
+        "create:reimbursement"
+      ],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "connection_id": {
+            "default": "",
+            "description": "Which connected Ramp account to use (see list_connections). Omit if only one is connected.",
+            "title": "Connection Id",
+            "type": "string"
+          },
+          "user_id": {
+            "description": "The Ramp user id this reimbursement is for.",
+            "title": "User Id",
+            "type": "string"
+          },
+          "amount": {
+            "description": "Reimbursement amount.",
+            "title": "Amount",
+            "type": "number"
+          },
+          "currency": {
+            "default": "USD",
+            "description": "Three-letter currency code.",
+            "title": "Currency",
+            "type": "string"
+          },
+          "memo": {
+            "default": "",
+            "description": "Optional memo/description for the reimbursement.",
+            "title": "Memo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "amount"
+        ],
+        "title": "CreateReimbursementParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "ok": {
+            "default": false,
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "record_id": {
+            "default": "",
+            "title": "Record Id",
+            "type": "string"
+          }
+        },
+        "title": "WriteResult",
+        "type": "object"
+      },
+      "event": "ramp-connector.create_reimbursement",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "tool_ramp-connector_chat"
+    },
+    {
+      "name": "update_user",
+      "description": "Update an existing Ramp user's department and/or role. Only given fields change.",
+      "action_type": "write",
+      "chain_callable": true,
+      "effects": [
+        "update:user"
+      ],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "connection_id": {
+            "default": "",
+            "description": "Which connected Ramp account to use (see list_connections). Omit if only one is connected.",
+            "title": "Connection Id",
+            "type": "string"
+          },
+          "user_id": {
+            "description": "The Ramp user id to update.",
+            "title": "User Id",
+            "type": "string"
+          },
+          "department_id": {
+            "default": "",
+            "description": "New department id. Leave empty to keep unchanged.",
+            "title": "Department Id",
+            "type": "string"
+          },
+          "role": {
+            "default": "",
+            "description": "New role, e.g. 'BUSINESS_ADMIN', 'BUSINESS_USER'. Leave empty to keep unchanged.",
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id"
+        ],
+        "title": "UpdateUserParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "ok": {
+            "default": false,
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "record_id": {
+            "default": "",
+            "title": "Record Id",
+            "type": "string"
+          }
+        },
+        "title": "WriteResult",
+        "type": "object"
+      },
+      "event": "ramp-connector.update_user",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "tool_ramp-connector_chat"
+    },
+    {
+      "name": "set_card_status",
+      "description": "Suspend or unsuspend a Ramp card -- blocks/restores its ability to make new purchases.",
+      "action_type": "write",
+      "chain_callable": true,
+      "effects": [
+        "update:card"
+      ],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "connection_id": {
+            "default": "",
+            "description": "Which connected Ramp account to use (see list_connections). Omit if only one is connected.",
+            "title": "Connection Id",
+            "type": "string"
+          },
+          "card_id": {
+            "description": "The Ramp card id.",
+            "title": "Card Id",
+            "type": "string"
+          },
+          "suspend": {
+            "description": "True to suspend the card, false to unsuspend it.",
+            "title": "Suspend",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "card_id",
+          "suspend"
+        ],
+        "title": "SetCardStatusParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "ok": {
+            "default": false,
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "record_id": {
+            "default": "",
+            "title": "Record Id",
+            "type": "string"
+          }
+        },
+        "title": "WriteResult",
+        "type": "object"
+      },
+      "event": "ramp-connector.set_card_status",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "tool_ramp-connector_chat"
+    },
+    {
+      "name": "get_spend_overview_report",
+      "description": "Value-add report: summarize recent Ramp transaction spend by category -- total spend and transaction count.",
+      "action_type": "read",
+      "chain_callable": true,
+      "effects": [],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "connection_id": {
+            "default": "",
+            "description": "Which connected Ramp account to use (see list_connections). Omit if only one is connected.",
+            "title": "Connection Id",
+            "type": "string"
+          },
+          "limit": {
+            "default": 100,
+            "description": "Number of recent transactions to scan for the overview.",
+            "maximum": 200,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "title": "GetSpendOverviewParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "transaction_count": {
+            "default": 0,
+            "title": "Transaction Count",
+            "type": "integer"
+          },
+          "total_spend": {
+            "default": 0.0,
+            "title": "Total Spend",
+            "type": "number"
+          },
+          "by_category": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "By Category",
+            "type": "object"
+          }
+        },
+        "title": "SpendOverviewReport",
+        "type": "object"
+      },
+      "event": "",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "tool_ramp-connector_chat"
+    },
+    {
+      "name": "get_card_utilization_report",
+      "description": "Value-add report: scan Ramp cards and flag active/suspended counts plus any cards near their spend limit.",
+      "action_type": "read",
+      "chain_callable": true,
+      "effects": [],
+      "id_projection": "",
+      "params_schema": {
+        "properties": {
+          "connection_id": {
+            "default": "",
+            "description": "Which connected Ramp account to use (see list_connections). Omit if only one is connected.",
+            "title": "Connection Id",
+            "type": "string"
+          },
+          "limit": {
+            "default": 100,
+            "description": "Number of cards to scan.",
+            "maximum": 200,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "title": "GetCardUtilizationReportParams",
+        "type": "object"
+      },
+      "return_schema": {
+        "properties": {
+          "total_cards": {
+            "default": 0,
+            "title": "Total Cards",
+            "type": "integer"
+          },
+          "active_cards": {
+            "default": 0,
+            "title": "Active Cards",
+            "type": "integer"
+          },
+          "suspended_cards": {
+            "default": 0,
+            "title": "Suspended Cards",
+            "type": "integer"
+          },
+          "cards_near_limit": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Cards Near Limit",
+            "type": "array"
+          }
+        },
+        "title": "CardUtilizationReport",
+        "type": "object"
+      },
+      "event": "",
+      "background": false,
+      "long_running": false,
+      "scopes": [],
+      "owner_chat_tool": "tool_ramp-connector_chat"
+    }
+  ],
+  "signals": [],
+  "schedules": [],
+  "required_scopes": [],
+  "icon_size_bytes": 677,
+  "panels": [
+    {
+      "panel_id": "ramp_connect",
+      "slot": "left",
+      "title": "Ramp",
+      "tree": {},
+      "icon": "",
+      "refresh": "manual",
+      "center_overlay": false
+    },
+    {
+      "panel_id": "ramp_connect_help",
+      "slot": "overlay",
+      "title": "How do I set this up?",
+      "tree": {},
+      "icon": "",
+      "refresh": "manual",
+      "center_overlay": false
+    },
+    {
+      "panel_id": "ramp_settings",
+      "slot": "center",
+      "title": "",
+      "tree": {},
+      "icon": "",
+      "refresh": "manual",
+      "center_overlay": false
+    }
+  ]
+}
