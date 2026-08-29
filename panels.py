@@ -51,6 +51,7 @@ def _connect_section() -> ui.UINode:
     return ui.Stack(direction="v", gap=3, children=[
         ui.Form(
             action="connect_ramp",
+            submit_label="Connect Ramp",
             children=[
                 ui.Stack(direction="v", gap=1, children=[
                     ui.Text("Client ID", variant="label"),
@@ -58,13 +59,12 @@ def _connect_section() -> ui.UINode:
                 ]),
                 ui.Stack(direction="v", gap=1, children=[
                     ui.Text("Client Secret", variant="label"),
-                    ui.Input(param_name="client_secret", placeholder="Paste your Ramp developer app Client Secret", secret=True),
+                    ui.Password(param_name="client_secret", placeholder="Paste your Ramp developer app Client Secret"),
                 ]),
                 ui.Stack(direction="v", gap=1, children=[
                     ui.Text("Label (optional)", variant="label"),
                     ui.Input(param_name="label", placeholder="e.g. Acme Inc Ramp"),
                 ]),
-                ui.Button("Connect Ramp", variant="primary", full_width=True, submit=True),
             ],
         ),
         ui.Button(
