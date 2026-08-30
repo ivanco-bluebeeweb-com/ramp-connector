@@ -38,3 +38,9 @@ ext = Extension(
 )
 
 chat = ChatExtension(ext)
+
+
+@ext.health_check
+async def health_check(ctx):
+    raw = await ctx.secrets.get("ramp_connections")
+    return {"ok": True, "has_connections": bool(raw)}

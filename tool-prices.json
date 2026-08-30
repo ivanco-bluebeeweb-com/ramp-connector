@@ -1,0 +1,12 @@
+{
+  "connect_ramp": 0,
+  "list_connections": 0,
+  "disconnect_ramp": 0,
+  "list_entities": 8,
+  "get_entity": 8,
+  "create_reimbursement": 16,
+  "update_user": 16,
+  "set_card_status": 20,
+  "get_spend_overview_report": 40,
+  "get_card_utilization_report": 40
+}
