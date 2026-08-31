@@ -37,7 +37,7 @@ async def get_spend_overview_report(ctx, params: GetSpendOverviewParams) -> Acti
         total += value
         cat = (r.get("sk_category_name") or r.get("category") or "Uncategorized")
         by_category[cat] = by_category.get(cat, 0.0) + value
-    return ActionResult.ok(SpendOverviewReport(transaction_count=len(rows), total_spend=round(total, 2), by_category={k: round(v, 2) for k, v in by_category.items()}))
+    return ActionResult.success(SpendOverviewReport(transaction_count=len(rows), total_spend=round(total, 2), by_category={k: round(v, 2) for k, v in by_category.items()})), summary="Spend overview report retrieved."
 
 
 @chat.function(
@@ -62,6 +62,6 @@ async def get_card_utilization_report(ctx, params: GetCardUtilizationReportParam
         available = r.get("spending_restrictions", {}).get("interval_spending_limit", 0) if isinstance(r.get("spending_restrictions"), dict) else 0
         if spend_limit and available and available <= spend_limit * 0.1:
             near_limit.append({"card_id": r.get("id", ""), "display_name": r.get("display_name", "")})
-    return ActionResult.ok(CardUtilizationReport(
+    return ActionResult.success(CardUtilizationReport(
         total_cards=len(rows), active_cards=active, suspended_cards=suspended, cards_near_limit=near_limit,
-    ))
+    )), summary="Card utilization report retrieved."

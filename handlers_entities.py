@@ -44,7 +44,7 @@ async def list_entities(ctx, params: ListEntitiesParams) -> ActionResult:
                 query[k] = v
     data = await rc.request(ctx, conn, "GET", rc.entity_path(params.entity), params=query, action=f"list {params.entity}")
     records = data.get("data", []) if isinstance(data, dict) else (data if isinstance(data, list) else [])
-    return ActionResult.ok(EntityList(entity=params.entity, count=len(records), records=records))
+    return ActionResult.success(EntityList(entity=params.entity, count=len(records), records=records)), summary="Entities listed."
 
 
 @chat.function(
@@ -65,7 +65,7 @@ async def get_entity(ctx, params: GetEntityParams) -> ActionResult:
     data = await rc.request(
         ctx, conn, "GET", rc.entity_path(params.entity, params.record_id), action=f"get {params.entity}"
     )
-    return ActionResult.ok(EntityDetail(entity=params.entity, record=data if isinstance(data, dict) else {}))
+    return ActionResult.success(EntityDetail(entity=params.entity, record=data if isinstance(data, dict) else {})), summary="Entity retrieved."
 
 
 @chat.function(
@@ -86,7 +86,7 @@ async def create_reimbursement(ctx, params: CreateReimbursementParams) -> Action
     }
     data = await rc.request(ctx, conn, "POST", "/reimbursements", json_body=body, action="create reimbursement")
     rec_id = data.get("id", "") if isinstance(data, dict) else ""
-    return ActionResult.ok(WriteResult(ok=True, record_id=rec_id))
+    return ActionResult.success(WriteResult(ok=True, record_id=rec_id)), summary="Reimbursement created."
 
 
 @chat.function(
@@ -108,7 +108,7 @@ async def update_user(ctx, params: UpdateUserParams) -> ActionResult:
     if not body:
         return ActionResult.error("Provide department_id and/or role to update.", code="RAMP_VALIDATION_FAILED")
     await rc.request(ctx, conn, "PATCH", f"/users/{params.user_id}", json_body=body, action="update user")
-    return ActionResult.ok(WriteResult(ok=True, record_id=params.user_id))
+    return ActionResult.success(WriteResult(ok=True, record_id=params.user_id)), summary="User updated."
 
 
 @chat.function(
@@ -124,4 +124,4 @@ async def set_card_status(ctx, params: SetCardStatusParams) -> ActionResult:
         return err
     path = f"/cards/{params.card_id}/{'suspend' if params.suspend else 'unsuspend'}"
     await rc.request(ctx, conn, "POST", path, action="set card status")
-    return ActionResult.ok(WriteResult(ok=True, record_id=params.card_id))
+    return ActionResult.success(WriteResult(ok=True, record_id=params.card_id)), summary="Card status updated."
