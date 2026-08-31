@@ -102,7 +102,7 @@ async def connect_ramp(ctx, params: ConnectRampParams) -> ActionResult:
         "expires_at": token_result["expires_at"],
     })
     await _save_connections(ctx, connections)
-    return ActionResult.success(ProviderConnection(id=conn_id, label=params.label or "Ramp")), summary="Ramp connected."
+    return ActionResult.success(ProviderConnection(id=conn_id, label=params.label or "Ramp"), summary="Ramp connected.")
 
 
 @chat.function(
@@ -114,7 +114,7 @@ async def list_connections(ctx, params: NoParams) -> ActionResult:
     """List the connected Ramp accounts."""
     connections = await _load_connections(ctx)
     items = [ProviderConnection(id=c.get("id", ""), label=c.get("label", "")) for c in connections]
-    return ActionResult.success(ProviderConnectionList(connections=items)), summary="Connections listed."
+    return ActionResult.success(ProviderConnectionList(connections=items), summary="Connections listed.")
 
 
 @chat.function(
@@ -130,4 +130,4 @@ async def disconnect_ramp(ctx, params: DisconnectRampParams) -> ActionResult:
     if len(remaining) == len(connections):
         return ActionResult.error("Connection not found.", code="RAMP_NOT_CONNECTED")
     await _save_connections(ctx, remaining)
-    return ActionResult.success(DeleteResult(deleted=True, id=params.connection_id)), summary="Ramp disconnected."
+    return ActionResult.success(DeleteResult(deleted=True, id=params.connection_id), summary="Ramp disconnected.")
